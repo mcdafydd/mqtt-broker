@@ -1,0 +1,51 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../orov-behaviors/orov-behavior.html">
+
+<dom-module name="orov-mqtt-broker">
+  <style>
+  </style>
+
+  <template>
+    <div><span on-click='handleClick'>{{__('MqttBroker')}}</span>:<span>{{Name}}</span></div>
+  </template>
+
+  <script>
+    (function() {
+      Polymer({
+        is: "orov-mqtt-broker",
+        properties: {
+          Name: {
+            type: String,
+          }
+        },
+
+        //The oROVStandard behavior makes the widget eventEmitter enabled
+        behaviors: [namespace('behaviors').oROVStandard],
+
+        handleClick: function()
+        {
+          //TODO: Raise the click event through the dom
+          this.fire('mqtt-broker-clicked');
+
+          //the eventEmitter is added by oROVStandard
+          if (this.eventEmitter !== undefined)
+          {
+            this.eventEmitter.emit("plugin.mqtt-broker.sayHello");
+          }
+        },
+
+        //This function is called by the oROVStandard behavior
+        registerEmitterHandlers: function(emitter){
+          var self = this;
+
+          //For subscribing to changes on state information
+          emitter.withHistory.on('plugin.mqtt-broker.settingsChange',function(settings)
+          {
+            self.Name = settings.firstName;
+          });
+        }
+      })
+    })();
+  </script>
+
+</dom-module>
