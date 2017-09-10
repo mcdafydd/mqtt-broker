@@ -1,13 +1,17 @@
 (function() 
 {
+    const mdns = require( 'bonjour' )();
     const Broker = require( 'mosca' );
     const Listener = require( 'Listener' );
+
+    var logger;
 
     class MqttBroker
     {
         constructor(name, deps)
         {
-            deps.logger.debug( 'MQTT broker plugin loaded!' );
+            logger = deps.logger;
+            logger.info( 'MQTT broker plugin loaded.' );
 
             this.globalBus  = deps.globalEventLoop;   // This is the server-side messaging bus. The MCU sends messages to server plugins over this
             this.cockpitBus = deps.cockpit;           // This is the server<->client messaging bus. This is how the server talks to the browser
@@ -22,7 +26,7 @@
                 host: '0.0.0.0',
                 port: 1883,
                 logger: {
-                  childOf: deps.logger
+                  childOf: logger
                 },
                 http: {
                   port: 3000,
@@ -37,30 +41,30 @@
             this.listeners = 
             {
                 // Listener for Settings updates
-                settings: new Listener( self.globalBus, 'settings-change.mqtt-broker', true, function( settings )
+                settings: new Listener( self.globalBus, 'settings-change.mqttBroker', true, function( settings )
                 {
                     // Apply settings
-                    self.settings = settings.mqtt-broker;
+                    self.settings = settings.mqttBroker;
 
                     // Emit settings update to cockpit
-                    self.cockpitBus.emit( 'plugin.mqtt-broker.settingsChange', self.settings );
+                    self.cockpitBus.emit( 'plugin.mqttBroker.settingsChange', self.settings );
                 }),
 
                 // Listener for MCU status messages
                 mcuStatus: new Listener( self.globalBus, 'mcu.status', false, function( data )
                 {
-                    // Check for the mqtt-broker field name in the MCU's status update
-                    if( 'mqtt-broker' in data ) 
+                    // Check for the mqttBroker field name in the MCU's status update
+                    if( 'mqttBroker' in data ) 
                     {
                         // Get the message that the MCU sent to us
-                        var message = data.mqtt-broker;
+                        var message = data.mqttBroker;
 
                         // Re-emit the message on the cockpit messaging bus (talks to the browser)
-                        self.cockpitBus.emit( 'plugin.mqtt-broker.message', message );
+                        self.cockpitBus.emit( 'plugin.mqttBroker.message', message );
                     }
                 }),
 
-                sayHello: new Listener( self.cockpitBus, 'plugin.mqtt-broker.sayHello', false, function( powerIn )
+                sayHello: new Listener( self.cockpitBus, 'plugin.mqttBroker.sayHello', false, function( powerIn )
                 {
                     var command;
 
@@ -93,29 +97,43 @@
           // Start the mosca MQTT and websocket servers
           this.broker = new Broker.Server(this.moscaSettings);
           this.broker.on('ready', () => {
-            deps.logger.debug('MQTT: Servers ready for connections');
+            logger.debug('MQTT: Servers ready for connections');
+            // Advertise the servers via mDNS
+            logger.debug('MQTT: Advertising services via mDNS');
+            mdns.publish({ name: 'OpenROV MQTT Server', 
+                           host: 'scini',
+                           type: 'mqtt', 
+                           protocol: 'tcp',
+                           txt: '',
+                           port: 1883 });
+            mdns.publish({ name: 'OpenROV MQTT via Websockets', 
+                           host: 'scini',
+                           type: 'mqtt-ws', 
+                           protocol: 'tcp',
+                           txt: '',
+                           port: 3000 });
           });
 
           this.broker.on('clientConnected', (client) => {
-            deps.logger.debug(`MQTT: Client ${client} connected`);
+            logger.debug(`MQTT: Client ${client} connected`);
           });
           this.broker.on('clientDisconnecting', (client) => {
-            deps.logger.debug(`MQTT: Client ${client} disconnecting`);
+            logger.debug(`MQTT: Client ${client} disconnecting`);
           });
           this.broker.on('clientDisconnected', (client) => {
-            deps.logger.debug(`MQTT: Client ${client} disconnected`);
+            logger.debug(`MQTT: Client ${client} disconnected`);
           });
           this.broker.on('clientError', (err, client) => {
-            deps.logger.debug(`MQTT: Client ${client} error ${err}`);
+            logger.debug(`MQTT: Client ${client} error ${err}`);
           });
           this.broker.on('published', (packet, client) => {
-            deps.logger.debug(`MQTT: Client ${client} published packet ${packet}`);
+            logger.debug(`MQTT: Client ${client} published packet ${packet}`);
           });
           this.broker.on('subscribed', (topic, client) => {
-            deps.logger.debug(`MQTT: Client ${client} subscribed to topic ${topic}`);
+            logger.debug(`MQTT: Client ${client} subscribed to topic ${topic}`);
           });
           this.broker.on('unsubscribed', (topic, client) => {
-            deps.logger.debug(`MQTT: Client ${client} unsubscribed from topic ${topic}`);
+            logger.debug(`MQTT: Client ${client} unsubscribed from topic ${topic}`);
           });
 
         }
@@ -130,7 +148,11 @@
           
           // Stop Mosca servers
           this.broker.close(() => {
-            deps.logger.debug('Mosca MQTT and websocket servers closed');
+            logger.debug('Mosca MQTT and websocket servers closed');
+            // Unpublish mDNS services and close socket
+            mdns.unpublishAll(() => {
+              mdns.destroy();
+            }
           });
         }
 
@@ -142,7 +164,7 @@
             return [{
                 'title': 'MQTT Broker Plugin',
                 'type': 'object',
-                'id': 'mqtt-broker',
+                'id': 'mqttBroker',
                 'properties': {
                   'firstName': {
                     'type': 'string',
