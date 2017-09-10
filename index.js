@@ -104,13 +104,13 @@
                            host: 'scini',
                            type: 'mqtt', 
                            protocol: 'tcp',
-                           txt: '',
+                           txt: {},
                            port: 1883 });
             mdns.publish({ name: 'OpenROV MQTT via Websockets', 
                            host: 'scini',
                            type: 'mqtt-ws', 
                            protocol: 'tcp',
-                           txt: '',
+                           txt: {},
                            port: 3000 });
           });
 
@@ -152,7 +152,7 @@
             // Unpublish mDNS services and close socket
             mdns.unpublishAll(() => {
               mdns.destroy();
-            }
+            });
           });
         }
 
