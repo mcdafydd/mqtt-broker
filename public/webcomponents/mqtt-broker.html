@@ -41,7 +41,7 @@
           //For subscribing to changes on state information
           emitter.withHistory.on('plugin.mqtt-broker.settingsChange',function(settings)
           {
-            self.Name = settings.firstName;
+            self.Name = settings.port;
           });
         }
       })

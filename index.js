@@ -100,40 +100,42 @@
             logger.debug('MQTT: Servers ready for connections');
             // Advertise the servers via mDNS
             logger.debug('MQTT: Advertising services via mDNS');
-            mdns.publish({ name: 'OpenROV MQTT Server', 
+            mdns.publish({ 
+                           name: 'OpenROV_MQTT', 
                            host: 'scini',
                            type: 'mqtt', 
                            protocol: 'tcp',
-                           txt: '',
                            port: 1883 });
-            mdns.publish({ name: 'OpenROV MQTT via Websockets', 
+            mdns.publish({
+                           name: 'OpenROV_MQTT_Websockets', 
                            host: 'scini',
                            type: 'mqtt-ws', 
                            protocol: 'tcp',
-                           txt: '',
                            port: 3000 });
+            // mdns_mqtt_svc.start();
+            // mdns_mqtt-ws_svc.start();
           });
 
           this.broker.on('clientConnected', (client) => {
-            logger.debug(`MQTT: Client ${client} connected`);
+            logger.debug(`MQTT: Client ${client.id} connected`);
           });
           this.broker.on('clientDisconnecting', (client) => {
-            logger.debug(`MQTT: Client ${client} disconnecting`);
+            logger.debug(`MQTT: Client ${client.id} disconnecting`);
           });
           this.broker.on('clientDisconnected', (client) => {
-            logger.debug(`MQTT: Client ${client} disconnected`);
+            logger.debug(`MQTT: Client ${client.id} disconnected`);
           });
           this.broker.on('clientError', (err, client) => {
-            logger.debug(`MQTT: Client ${client} error ${err}`);
+            logger.debug(`MQTT: Client ${client.id} error ${err}`);
           });
           this.broker.on('published', (packet, client) => {
-            logger.debug(`MQTT: Client ${client} published packet ${packet}`);
+            logger.debug(`MQTT: Client ${client} published packet ID ${packet.messageId} on topic ${packet.topic}`);
           });
           this.broker.on('subscribed', (topic, client) => {
-            logger.debug(`MQTT: Client ${client} subscribed to topic ${topic}`);
+            logger.debug(`MQTT: Client ${client.id} subscribed to topic ${topic}`);
           });
           this.broker.on('unsubscribed', (topic, client) => {
-            logger.debug(`MQTT: Client ${client} unsubscribed from topic ${topic}`);
+            logger.debug(`MQTT: Client ${client.id} unsubscribed from topic ${topic}`);
           });
 
         }
@@ -152,7 +154,7 @@
             // Unpublish mDNS services and close socket
             mdns.unpublishAll(() => {
               mdns.destroy();
-            }
+            });
           });
         }
 
@@ -166,23 +168,13 @@
                 'type': 'object',
                 'id': 'mqttBroker',
                 'properties': {
-                  'firstName': {
-                    'type': 'string',
-                    'default': 'Open'
-                  },
-                  'lastName': {
-                    'type': 'string',
-                    'default': 'Rov'
-                  },
-                  'age': {
-                    'description': 'Age in years',
+                  'port': {
                     'type': 'integer',
-                    'minimum': 0
+                    'default': 3000
                   }
                 },
                 'required': [
-                  'firstName',
-                  'lastName'
+                  'port'
                 ]
             }];
         }
