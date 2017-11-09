@@ -109,7 +109,7 @@
             mdns.publish({
                            name: 'OpenROV_MQTT_Websockets', 
                            host: 'scini',
-                           type: 'mqtt-ws', 
+                           type: 'http', 
                            protocol: 'tcp',
                            port: 3000 });
             // mdns_mqtt_svc.start();
@@ -137,7 +137,10 @@
           this.broker.on('unsubscribed', (topic, client) => {
             logger.debug(`MQTT: Client ${client.id} unsubscribed from topic ${topic}`);
           });
-
+          // catch remaining events
+          this.broker.on('uncaughtException', function (err) {
+            console.log('UNCAUGHT EXCEPTION - keeping process alive:', err); // err.message is "foobar"
+});
         }
 
         // This is called when the plugin is disabled
