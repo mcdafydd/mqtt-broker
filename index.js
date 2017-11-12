@@ -117,12 +117,14 @@
           });
 
           this.broker.on('clientConnected', (client) => {
+            this.globalBus.emit( 'plugin.mqttBroker.clientConnected', client.id );
             logger.debug(`MQTT: Client ${client.id} connected`);
           });
           this.broker.on('clientDisconnecting', (client) => {
             logger.debug(`MQTT: Client ${client.id} disconnecting`);
           });
           this.broker.on('clientDisconnected', (client) => {
+            this.globalBus.emit( 'plugin.mqttBroker.clientDisconnected', client.id );
             logger.debug(`MQTT: Client ${client.id} disconnected`);
           });
           this.broker.on('clientError', (err, client) => {
@@ -139,8 +141,8 @@
           });
           // catch remaining events
           this.broker.on('uncaughtException', function (err) {
-            console.log('UNCAUGHT EXCEPTION - keeping process alive:', err); // err.message is "foobar"
-});
+            logger.debug('UNCAUGHT EXCEPTION - keeping process alive:', err.message);
+          });
         }
 
         // This is called when the plugin is disabled
