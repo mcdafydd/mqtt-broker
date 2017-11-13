@@ -131,6 +131,7 @@
             logger.debug(`MQTT: Client ${client.id} error ${err}`);
           });
           this.broker.on('published', (packet, client) => {
+            this.globalBus.emit( 'plugin.mqttBroker.publishedByClientId', client );
             logger.debug(`MQTT: Client ${client} published packet ID ${packet.messageId} on topic ${packet.topic}`);
           });
           this.broker.on('subscribed', (topic, client) => {
