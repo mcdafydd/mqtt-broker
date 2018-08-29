@@ -117,14 +117,14 @@
           });
 
           this.broker.on('clientConnected', (client) => {
-            this.globalBus.emit( 'plugin.mqttBroker.clientConnected', client.id );
+            this.globalBus.emit( 'plugin.mqttBroker.clientConnected', client );
             logger.debug(`MQTT: Client ${client.id} connected`);
           });
           this.broker.on('clientDisconnecting', (client) => {
             logger.debug(`MQTT: Client ${client.id} disconnecting`);
           });
           this.broker.on('clientDisconnected', (client) => {
-            this.globalBus.emit( 'plugin.mqttBroker.clientDisconnected', client.id );
+            this.globalBus.emit( 'plugin.mqttBroker.clientDisconnected', client );
             logger.debug(`MQTT: Client ${client.id} disconnected`);
           });
           this.broker.on('clientError', (err, client) => {
